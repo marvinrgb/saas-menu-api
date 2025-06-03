@@ -85,9 +85,9 @@ export class CategoryService extends BaseService<Category> {
 
   async create(data: Prisma.CategoryCreateInput) {
     // If no order is provided, set it to the next available order number
-    if (!data.order) {
+    if (data.order === undefined) {
       const lastCategory = await this.prisma.category.findFirst({
-        where: { menuId: data.menu.connect.id },
+        where: { menuId: data.menuId as string },
         orderBy: { order: 'desc' }
       });
       data.order = lastCategory ? lastCategory.order + 1 : 0;
@@ -95,20 +95,6 @@ export class CategoryService extends BaseService<Category> {
 
     return this.prisma.category.create({
       data,
-      include: {
-        menuItems: {
-          include: {
-            optionGroups: {
-              include: {
-                options: true
-              }
-            }
-          },
-          orderBy: {
-            order: 'asc'
-          }
-        }
-      }
     });
   }
 

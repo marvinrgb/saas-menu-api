@@ -69,21 +69,6 @@ export class MenuService extends BaseService {
     async create(data) {
         return this.prisma.menu.create({
             data,
-            include: {
-                categories: {
-                    include: {
-                        menuItems: {
-                            include: {
-                                optionGroups: {
-                                    include: {
-                                        options: true
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         });
     }
     async update(id, data) {

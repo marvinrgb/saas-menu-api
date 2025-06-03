@@ -80,20 +80,15 @@ components:
           type: string
         address:
           type: string
-          nullable: true
         phone:
           type: string
-          nullable: true
         email:
           type: string
           format: email
-          nullable: true
         logoUrl:
           type: string
-          nullable: true
         qrCodeUrl:
           type: string
-          nullable: true
         subscriptionStatus:
           type: string
           enum: [free, basic, premium]
@@ -114,7 +109,6 @@ components:
           type: string
         description:
           type: string
-          nullable: true
         isActive:
           type: boolean
         lastUpdated:
@@ -137,10 +131,8 @@ components:
           type: string
         description:
           type: string
-          nullable: true
         order:
           type: integer
-          minimum: 0
         createdAt:
           type: string
           format: date-time
@@ -165,7 +157,6 @@ components:
           type: string
         description:
           type: string
-          nullable: true
         price:
           type: number
           format: float
@@ -173,10 +164,8 @@ components:
           type: boolean
         imageUrl:
           type: string
-          nullable: true
         order:
           type: integer
-          minimum: 0
         createdAt:
           type: string
           format: date-time
@@ -185,11 +174,14 @@ components:
           format: date-time
         categoryId:
           type: string
-          format: cuid
         optionGroups:
           type: array
           items:
             $ref: '#/components/schemas/OptionGroup'
+        specialOffers:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpecialOffer'
 
     OptionGroup:
       type: object
@@ -203,13 +195,10 @@ components:
           type: boolean
         minSelections:
           type: integer
-          minimum: 0
         maxSelections:
           type: integer
-          minimum: 0
         order:
           type: integer
-          minimum: 0
         createdAt:
           type: string
           format: date-time
@@ -244,6 +233,39 @@ components:
           type: string
           format: date-time
         optionGroupId:
+          type: string
+          format: cuid
+
+    SpecialOffer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: cuid
+        name:
+          type: string
+        description:
+          type: string
+        offerType:
+          type: string
+        priceAdjustment:
+          type: number
+          format: float
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        menuItemId:
           type: string
           format: cuid
 
@@ -769,6 +791,797 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Category'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /menu-items:
+    get:
+      summary: List all menu items
+      description: Retrieve a paginated list of menu items, optionally filtered by category
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: categoryId
+          in: query
+          schema:
+            type: string
+            format: cuid
+        - name: includeOptionGroups
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: List of menu items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MenuItem'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Create a new menu item
+      description: Create a new menu item in a category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - price
+                - categoryId
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                price:
+                  type: number
+                  format: float
+                isAvailable:
+                  type: boolean
+                  default: true
+                imageUrl:
+                  type: string
+                order:
+                  type: integer
+                  minimum: 0
+                categoryId:
+                  type: string
+                  format: cuid
+      responses:
+        '201':
+          description: Menu item created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/MenuItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /menu-items/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: cuid
+    get:
+      summary: Get a menu item by ID
+      description: Retrieve detailed information about a specific menu item
+      responses:
+        '200':
+          description: Menu item details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/MenuItem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update a menu item
+      description: Update an existing menu item's information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                price:
+                  type: number
+                  format: float
+                isAvailable:
+                  type: boolean
+                imageUrl:
+                  type: string
+                order:
+                  type: integer
+                  minimum: 0
+                categoryId:
+                  type: string
+                  format: cuid
+      responses:
+        '200':
+          description: Menu item updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/MenuItem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete a menu item
+      description: Delete a menu item and all its associated data
+      responses:
+        '204':
+          description: Menu item deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /menu-items/{id}/reorder:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: cuid
+    patch:
+      summary: Reorder a menu item
+      description: Update the display order of a menu item within its category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - order
+              properties:
+                order:
+                  type: integer
+                  minimum: 0
+      responses:
+        '200':
+          description: Menu item reordered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/MenuItem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /option-groups:
+    get:
+      summary: List all option groups
+      description: Retrieve a paginated list of option groups, optionally filtered by menu item
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: menuItemId
+          in: query
+          schema:
+            type: string
+            format: cuid
+        - name: includeOptions
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: List of option groups
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OptionGroup'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Create a new option group
+      description: Create a new option group for a menu item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - menuItemId
+              properties:
+                name:
+                  type: string
+                isMultiSelect:
+                  type: boolean
+                  default: false
+                minSelections:
+                  type: integer
+                  minimum: 0
+                maxSelections:
+                  type: integer
+                  minimum: 0
+                order:
+                  type: integer
+                  minimum: 0
+                menuItemId:
+                  type: string
+                  format: cuid
+      responses:
+        '201':
+          description: Option group created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/OptionGroup'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /option-groups/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: cuid
+    get:
+      summary: Get an option group by ID
+      description: Retrieve detailed information about a specific option group
+      responses:
+        '200':
+          description: Option group details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/OptionGroup'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update an option group
+      description: Update an existing option group's information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                isMultiSelect:
+                  type: boolean
+                minSelections:
+                  type: integer
+                  minimum: 0
+                maxSelections:
+                  type: integer
+                  minimum: 0
+                order:
+                  type: integer
+                  minimum: 0
+                menuItemId:
+                  type: string
+                  format: cuid
+      responses:
+        '200':
+          description: Option group updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/OptionGroup'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete an option group
+      description: Delete an option group and all its associated options
+      responses:
+        '204':
+          description: Option group deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /option-groups/{id}/reorder:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: cuid
+    patch:
+      summary: Reorder an option group
+      description: Update the display order of an option group within its menu item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - order
+              properties:
+                order:
+                  type: integer
+                  minimum: 0
+      responses:
+        '200':
+          description: Option group reordered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/OptionGroup'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /options:
+    get:
+      summary: List all options
+      description: Retrieve a paginated list of options, optionally filtered by option group
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: optionGroupId
+          in: query
+          schema:
+            type: string
+            format: cuid
+      responses:
+        '200':
+          description: List of options
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Option'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Create a new option
+      description: Create a new option for an option group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - optionGroupId
+              properties:
+                name:
+                  type: string
+                priceAdjustment:
+                  type: number
+                  format: float
+                  default: 0.00
+                isAvailable:
+                  type: boolean
+                  default: true
+                optionGroupId:
+                  type: string
+                  format: cuid
+      responses:
+        '201':
+          description: Option created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Option'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /options/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: cuid
+    get:
+      summary: Get an option by ID
+      description: Retrieve detailed information about a specific option
+      responses:
+        '200':
+          description: Option details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Option'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update an option
+      description: Update an existing option's information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                priceAdjustment:
+                  type: number
+                  format: float
+                isAvailable:
+                  type: boolean
+                optionGroupId:
+                  type: string
+                  format: cuid
+      responses:
+        '200':
+          description: Option updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Option'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete an option
+      description: Delete an option
+      responses:
+        '204':
+          description: Option deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /special-offers:
+    get:
+      summary: List all special offers
+      description: Retrieve a paginated list of special offers, optionally filtered by menu item
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: menuItemId
+          in: query
+          schema:
+            type: string
+            format: cuid
+      responses:
+        '200':
+          description: List of special offers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SpecialOffer'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Create a new special offer
+      description: Create a new special offer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - offerType
+                - priceAdjustment
+                - startTime
+                - endTime
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                offerType:
+                  type: string
+                priceAdjustment:
+                  type: number
+                  format: float
+                startTime:
+                  type: string
+                  format: date-time
+                endTime:
+                  type: string
+                  format: date-time
+                isActive:
+                  type: boolean
+                  default: true
+                menuItemId:
+                  type: string
+                  format: cuid
+      responses:
+        '201':
+          description: Special offer created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/SpecialOffer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /special-offers/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: cuid
+    get:
+      summary: Get a special offer by ID
+      description: Retrieve detailed information about a specific special offer
+      responses:
+        '200':
+          description: Special offer details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/SpecialOffer'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update a special offer
+      description: Update an existing special offer's information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                offerType:
+                  type: string
+                priceAdjustment:
+                  type: number
+                  format: float
+                startTime:
+                  type: string
+                  format: date-time
+                endTime:
+                  type: string
+                  format: date-time
+                isActive:
+                  type: boolean
+                menuItemId:
+                  type: string
+                  format: cuid
+      responses:
+        '200':
+          description: Special offer updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/SpecialOffer'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete a special offer
+      description: Delete a special offer
+      responses:
+        '204':
+          description: Special offer deleted successfully
         '404':
           $ref: '#/components/responses/NotFound'
         '500':

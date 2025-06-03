@@ -72,6 +72,7 @@ model MenuItem {
   category          Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   optionGroups      OptionGroup[] // A menu item can have multiple option groups (e.g., "Toppings", "Size")
+  specialOffers     SpecialOffer[] // Add the relation to SpecialOffer
 }
 
 // Model for a group of options for a MenuItem (e.g., "Toppings", "Size")
@@ -102,4 +103,24 @@ model Option {
 
   optionGroupId     String
   optionGroup       OptionGroup @relation(fields: [optionGroupId], references: [id], onDelete: Cascade)
+}
+
+// Model for Special Offers
+model SpecialOffer {
+  id                String    @id @default(cuid())
+  name              String    // Name of the special offer
+  description       String?   // Optional description of the offer
+  offerType         String    // e.g., "Discount", "Buy One Get One"
+  priceAdjustment   Decimal   @default(0.00) // Price adjustment (can be positive or negative)
+  startTime         DateTime
+  endTime           DateTime
+  isActive          Boolean   @default(true) // Whether the offer is currently active
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Optional relation to a MenuItem the offer applies to
+  menuItemId        String?
+  menuItem          MenuItem? @relation(fields: [menuItemId], references: [id])
+
+  @@index([menuItemId])
 }
